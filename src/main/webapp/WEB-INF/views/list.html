@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+</head>
+<body>
+<form id="create" onsubmit="addProduct()">
+    <h1>Tao moi HV</h1>
+    <label>Name
+        <input type="text" placeholder="category name" id="name"/>
+    </label>
+    <label>Province
+        <select id="category">
+            <th:block th:each="p: ${categories}">
+                <option th:value="${p.id}" th:text="${p.name}"></option>
+            </th:block>
+        </select>
+    </label>
+    <input type="submit" value="Tạo mới">
+</form>
+
+<table border="1" id="listProduct">
+    <tr>
+        <th>Name</th>
+        <th>Province</th>
+        <th>Delete</th>
+        <th>Edit</th>
+    </tr>
+    <tbody id="listProducts">
+    <th:block th:each="c: ${products}">
+        <tr>
+            <td th:text="${c.name}"></td>
+            <td th:text="${c.category.name}"></td>
+            <td><a class="deleteProduct" th:href="${c.id}">Delete</a></td>
+            <td><a th:href="${c.id}">Edit</a></td>
+        </tr>
+    </th:block>
+    </tbody>
+</table>
+</body>
+<script>
+    function addProduct() {
+        let productName = $("#name").val();
+        let categoryId = $("#category").val();
+        let newProduct = {
+            name: productName,
+            category: {
+                id: categoryId
+            }
+        }
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            type: "POST",
+            data: JSON.stringify(newProduct),
+            url: "/products/create",
+            success: showListProduct
+        })
+        event.preventDefault();
+    }
+
+    function showListProduct() {
+        $.ajax({
+            type: "GET",
+            url: "/products/getAll",
+            success: function (data) {
+                let content = "";
+                for (let i = 0; i < data.length; i++) {
+                    content += `<tr>\n` +
+                        `            <td>${data[i].name}</td>\n` +
+                        `              <td>${data[i].category.name}</td>\n` +
+                        `            <td><a href="${data[i].id}">Delete</a></td>\n` +
+                        `            <td><a href="${data[i].id}">Edit</a></td>\n` +
+                        `        </tr>`
+                }
+                $("#listProduct").html(content);
+            }
+        })
+    }
+
+    $(document).ready(function () {
+        $('.deleteProduct').click(function(event) {
+            let a = $(this)
+            let idProduct = a.attr('href');
+            $.ajax({
+                type : "GET",
+                url : "/products/delete/"+ idProduct,
+                success : function (data) {
+                    a.parent().parent().remove();
+                }
+            });
+            event.preventDefault();
+        });
+
+    })
+</script>
+</html>
